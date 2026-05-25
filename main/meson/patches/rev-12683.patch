@@ -4,13 +4,14 @@ something that may be unwanted
 (note in 1.4.1: it now skips if the macro is in compiler defines, but libc++
 default system config does not count as a default compiler define?)
 --
+diff --git a/mesonbuild/compilers/cpp.py b/mesonbuild/compilers/cpp.py
 --- a/mesonbuild/compilers/cpp.py
 +++ b/mesonbuild/compilers/cpp.py
-@@ -314,25 +314,6 @@ class ClangCPPCompiler(_StdCPPLibMixin, ClangCPPStds, ClangCompiler, CPPCompiler
-     def is_libcpp_enable_assertions_deprecated(self) -> bool:
-         return version_compare(self.version, ">=18")
+@@ -308,20 +308,6 @@ class ClangCPPCompiler(_StdCPPLibMixin, ClangCPPStds, ClangCompiler, CPPCompiler
+             return libs
+         return []
  
--    def get_assert_args(self, disable: bool, env: 'Environment') -> T.List[str]:
+-    def get_assert_args(self, disable: bool) -> T.List[str]:
 -        if disable:
 -            return ['-DNDEBUG']
 -
@@ -19,24 +20,19 @@ default system config does not count as a default compiler define?)
 -            if self.defines.get(macro) is not None:
 -                return []
 -
--        if self.language_stdlib_provider(env) == 'stdc++':
+-        if self.language_stdlib_provider(self.environment) == 'stdc++':
 -            return ['-D_GLIBCXX_ASSERTIONS=1']
--        else:
--            if self.is_libcpp_enable_assertions_deprecated():
--                return ['-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST']
--            elif version_compare(self.version, '>=15'):
--                return ['-D_LIBCPP_ENABLE_ASSERTIONS=1']
 -
--        return []
+-        return ['-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST']
 -
      def get_pch_use_args(self, pch_dir: str, header: str) -> T.List[str]:
          args = super().get_pch_use_args(pch_dir, header)
          if version_compare(self.version, '>=11'):
-@@ -530,25 +511,6 @@ class GnuCPPCompiler(_StdCPPLibMixin, GnuCPPStds, GnuCompiler, CPPCompiler):
+@@ -521,29 +507,6 @@ class GnuCPPCompiler(_StdCPPLibMixin, GnuCPPStds, GnuCompiler, CPPCompiler):
              return libs
          return []
  
--    def get_assert_args(self, disable: bool, env: 'Environment') -> T.List[str]:
+-    def get_assert_args(self, disable: bool) -> T.List[str]:
 -        if disable:
 -            return ['-DNDEBUG']
 -
@@ -45,13 +41,17 @@ default system config does not count as a default compiler define?)
 -            if self.defines.get(macro) is not None:
 -                return []
 -
--        if self.language_stdlib_provider(env) == 'stdc++':
+-        # For GCC, we can assume that the libstdc++ version is the same as
+-        # the compiler itself. Anything else isn't supported.
+-        if self.language_stdlib_provider(self.environment) == 'stdc++':
 -            return ['-D_GLIBCXX_ASSERTIONS=1']
 -        else:
+-            # One can use -stdlib=libc++ with GCC, it just (as of 2025) requires
+-            # an experimental configure arg to expose that. libc++ supports "multiple"
+-            # versions of GCC (only ever one version of GCC per libc++ version), but
+-            # that is "multiple" for our purposes as we can't assume a mapping.
 -            if version_compare(self.version, '>=18'):
 -                return ['-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST']
--            elif version_compare(self.version, '>=15'):
--                return ['-D_LIBCPP_ENABLE_ASSERTIONS=1']
 -
 -        return []
 -
