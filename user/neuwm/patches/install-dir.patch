@@ -1,0 +1,19 @@
+diff --git a/meson.build b/meson.build
+index 52d62a2..9367e91 100644
+--- a/meson.build
++++ b/meson.build
+@@ -44,12 +44,12 @@ executable('neuwm',
+   c_args : ['-D_POSIX_C_SOURCE=200809L', '-Wall', '-Wextra'],
+   dependencies : pkg_deps + [libm, luajit_dep, neuipc_dep],
+   install : true,
+-  install_dir : '/usr/local/bin',
++  install_dir : '/usr/bin',
+ )
+ 
+ executable('neuwmctl',
+   sources : ['source/neuwmctl.c'],
+   c_args : ['-D_POSIX_C_SOURCE=200809L'],
+   install : true,
+-  install_dir : '/usr/local/bin',
++  install_dir : '/usr/bin',
+ )
